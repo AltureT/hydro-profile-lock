@@ -35,6 +35,10 @@ pm2 restart hydrooj
 | `fields` | string[] | 见上方列表 | 锁定的字段列表 |
 | `reset.backgroundImage` | string | `/components/profile/backgrounds/1.jpg` | 重置时使用的背景图路径 |
 
+## 相关项目
+
+- [Hydro OJ](https://github.com/hydro-dev/Hydro)
+
 ## 许可证
 
 AGPL-3.0-only（与 Hydro 主仓库一致）
