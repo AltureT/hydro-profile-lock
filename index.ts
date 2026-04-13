@@ -31,6 +31,16 @@ function isTruthy(v: any) {
     return !!s && !['0', 'false', 'off', 'no'].includes(s);
 }
 
+function isValidBackgroundImage(value: string): boolean {
+    return /^\/[\w\-\/.]+$/.test(value) && !value.includes('..');
+}
+
+function maskIp(ip: string): string {
+    if (ip.includes('.')) return ip.replace(/\.\d+$/, '.***');
+    if (ip.includes(':')) return ip.replace(/:[^:]+$/, ':***');
+    return '***';
+}
+
 class ManageProfileLockHandler extends Handler {
     async prepare() {
         this.checkPriv(PRIV.PRIV_EDIT_SYSTEM);
@@ -48,10 +58,10 @@ class ManageProfileLockHandler extends Handler {
             log,
             fields,
             backgroundImage,
-            saved: this.args.saved,
-            reset: this.args.reset,
-            matched: this.args.matched,
-            modified: this.args.modified,
+            saved: this.args.saved === '1',
+            reset: this.args.reset === '1',
+            matched: /^\d+$/.test(String(this.args.matched || '')) ? this.args.matched : undefined,
+            modified: /^\d+$/.test(String(this.args.modified || '')) ? this.args.modified : undefined,
         };
     }
 
@@ -66,8 +76,10 @@ class ManageProfileLockHandler extends Handler {
     }
 
     async postReset() {
-        const backgroundImage = this.args.backgroundImage ? String(this.args.backgroundImage) : undefined;
-        if (backgroundImage) await this.ctx.setting.setConfig('profile-lock.reset.backgroundImage', backgroundImage);
+        const rawBg = this.args.backgroundImage ? String(this.args.backgroundImage).trim() : undefined;
+        if (rawBg && isValidBackgroundImage(rawBg)) {
+            await this.ctx.setting.setConfig('profile-lock.reset.backgroundImage', rawBg);
+        }
 
         const background = (this.ctx.setting.get('profile-lock.reset.backgroundImage') as string)
             || '/components/profile/backgrounds/1.jpg';
@@ -138,7 +150,7 @@ export function apply(ctx: Context, config: ReturnType<typeof Config>) {
             logger.info(
                 'Blocked profile update: uid=%d ip=%s fields=%s',
                 that.user._id,
-                that.request.ip,
+                maskIp(that.request.ip),
                 touched.join(','),
             );
         }
@@ -147,7 +159,7 @@ export function apply(ctx: Context, config: ReturnType<typeof Config>) {
     // Block avatar upload / direct set from /home/avatar (HomeAvatarHandler.post).
     ctx.on('handler/before/HomeAvatar#post', (that) => {
         if (!locked.has('avatar')) return;
-        if (config.log) logger.info('Blocked avatar update: uid=%d ip=%s', that.user._id, that.request.ip);
+        if (config.log) logger.info('Blocked avatar update: uid=%d ip=%s', that.user._id, maskIp(that.request.ip));
         that.back();
         return 'after';
     });

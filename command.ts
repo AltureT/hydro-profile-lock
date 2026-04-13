@@ -26,7 +26,11 @@ function loadOptions() {
     ];
     const f = candidate.find((i) => fs.existsSync(i));
     if (!f) return null;
-    return JSON.parse(fs.readFileSync(f, 'utf-8'));
+    try {
+        return JSON.parse(fs.readFileSync(f, 'utf-8'));
+    } catch (e) {
+        throw new Error(`Failed to parse config file ${f}: ${(e as Error).message}`);
+    }
 }
 
 async function getMongoUrl() {
@@ -53,6 +57,7 @@ export function register(cli: CAC) {
         .option('--limit <limit>', 'Only affect first N matched users (sorted by uid asc)', { default: 0 })
         .option('--avatar <avatar>', 'Set avatar for all users; default is gravatar:<mail> per user', { default: '' })
         .option('--backgroundImage <backgroundImage>', 'Set background image for all users', { default: '/components/profile/backgrounds/1.jpg' })
+        .option('--verbose', 'Print detailed filter and update pipeline', { default: false })
         .action(async (options) => {
             const opts = loadOptions() || {};
             const url = await getMongoUrl();
@@ -100,10 +105,12 @@ export function register(cli: CAC) {
                 }];
 
                 const matched = await userColl.countDocuments(filter);
-                console.log('MongoDB:', maskMongoUrl(url), `(db=${dbName}, collection=${userCollectionName})`);
-                console.log('Target filter:', JSON.stringify(filter));
                 console.log('Matched users:', matched);
-                console.log('Update pipeline:\n', JSON.stringify(updatePipeline, null, 2));
+                if (options.verbose) {
+                    console.log('MongoDB:', maskMongoUrl(url), `(db=${dbName}, collection=${userCollectionName})`);
+                    console.log('Target filter:', JSON.stringify(filter));
+                    console.log('Update pipeline:\n', JSON.stringify(updatePipeline, null, 2));
+                }
 
                 if (!options.yes) {
                     console.warn('Dry-run only. Re-run with `--yes` to apply.');
