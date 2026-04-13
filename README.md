@@ -1,36 +1,40 @@
 # hydro-profile-lock
 
-Hydro OJ 插件：用于锁定用户个人信息字段，并提供一键重置功能。
-
-本插件基于 AI 辅助开发。
+Hydro OJ 插件：锁定用户个人信息字段，禁止用户自行修改，并提供一键重置功能。
 
 ## 安装
 
+将插件目录放置到服务器上，然后执行：
+
 ```bash
-hydrooj addon add "/path/hydro-profile-lock"
+hydrooj addon add /path/to/hydro-profile-lock
 pm2 restart hydrooj
 ```
 
-安装完成后请重启 Hydro。
-
 ## 使用
 
-1. 进入管理后台，找到“个人信息锁定”。
-2. 访问管理页：`/manage/profile-lock`。
-3. 开启/关闭禁止修改、日志记录，查看锁定字段列表。
-4. 需要时可执行“重置所有用户个人信息”。
+安装后进入 Hydro 管理后台，左侧菜单会出现「个人信息锁定」，或直接访问 `/manage/profile-lock`。
 
-## 配置项（可选）
+在管理页面中可以：
 
-- `profile-lock.enabled`: 是否启用（默认 `true`）
-- `profile-lock.log`: 是否记录日志（默认 `true`）
-- `profile-lock.fields`: 锁定字段列表
-- `profile-lock.reset.backgroundImage`: 重置背景图
+- 开启/关闭锁定功能
+- 开启/关闭拦截日志
+- 查看当前锁定的字段列表
+- 一键重置所有用户的个人信息（头像、昵称、简介、背景图等）
 
-## 说明
+## 默认锁定字段
 
-- 本插件为 Hydro OJ 插件，Hydro 仓库：https://github.com/hydro-dev/Hydro
+`avatar` `bio` `qq` `gender` `school` `studentId` `phone` `backgroundImage` `displayName`
+
+## 配置项
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `enabled` | boolean | `true` | 是否启用锁定 |
+| `log` | boolean | `true` | 是否记录拦截日志 |
+| `fields` | string[] | 见上方列表 | 锁定的字段列表 |
+| `reset.backgroundImage` | string | `/components/profile/backgrounds/1.jpg` | 重置时使用的背景图路径 |
 
 ## 许可证
 
-AGPL-3.0-only（与 Hydro 主仓库一致）。
+AGPL-3.0-only（与 Hydro 主仓库一致）
