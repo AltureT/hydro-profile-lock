@@ -60,6 +60,7 @@ class ManageProfileLockHandler extends Handler {
             backgroundImage,
             saved: this.args.saved === '1',
             reset: this.args.reset === '1',
+            bgInvalid: this.args.bgInvalid === '1',
             matched: /^\d+$/.test(String(this.args.matched || '')) ? this.args.matched : undefined,
             modified: /^\d+$/.test(String(this.args.modified || '')) ? this.args.modified : undefined,
         };
@@ -77,7 +78,11 @@ class ManageProfileLockHandler extends Handler {
 
     async postReset() {
         const rawBg = this.args.backgroundImage ? String(this.args.backgroundImage).trim() : undefined;
-        if (rawBg && isValidBackgroundImage(rawBg)) {
+        if (rawBg && !isValidBackgroundImage(rawBg)) {
+            this.response.redirect = this.url('manage_profile_lock', { query: { bgInvalid: '1' } });
+            return;
+        }
+        if (rawBg) {
             await this.ctx.setting.setConfig('profile-lock.reset.backgroundImage', rawBg);
         }
 
@@ -124,6 +129,7 @@ export function apply(ctx: Context, config: ReturnType<typeof Config>) {
         'Reset All Users Profiles': '重置所有用户个人信息',
         'Background Image': '背景图片',
         Saved: '已保存',
+        'Invalid background image path.': '背景图片路径无效，仅允许以 / 开头的字母数字路径。',
         'Reset done. matched={0} modified={1}': '已重置。匹配={0} 修改={1}',
     });
     ctx.i18n.load('en', {
