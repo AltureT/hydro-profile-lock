@@ -11,6 +11,9 @@
     {% if reset %}
       <blockquote class="note">{{ _('Reset done. matched={0} modified={1}').format(matched or '-', modified or '-') }}</blockquote>
     {% endif %}
+    {% if bgInvalid %}
+      <blockquote class="warn">{{ _('Invalid background image path.') }}</blockquote>
+    {% endif %}
 
     <h2>{{ _('Block User Profile Updates') }}</h2>
     <form method="post">
