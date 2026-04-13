@@ -50,7 +50,7 @@ function resolveCollectionName(base: string, opts: any) {
 }
 
 export function register(cli: CAC) {
-    cli.command('reset-user-profile', 'Reset all users profile fields (avatar/bio/qq/gender/school/studentId/phone/backgroundImage)')
+    cli.command('reset-user-profile', 'Reset all users profile fields (avatar/bio/qq/gender/school/studentId/phone/displayName/backgroundImage)')
         .option('--yes', 'Actually apply changes (default: dry-run)', { default: false })
         .option('--minUid <minUid>', 'Only affect users with uid >= minUid', { default: 1 })
         .option('--maxUid <maxUid>', 'Only affect users with uid <= maxUid', { default: undefined })
@@ -77,6 +77,8 @@ export function register(cli: CAC) {
             try {
                 const db = client.db(dbName);
                 const userColl = db.collection(userCollectionName);
+                const domainUserCollName = resolveCollectionName('domain.user', opts);
+                const domainUserColl = db.collection(domainUserCollName);
                 const baseFilter: any = { _id: { $gte: minUid } };
                 if (typeof maxUid === 'number') baseFilter._id.$lte = maxUid;
 
@@ -116,8 +118,12 @@ export function register(cli: CAC) {
                     console.warn('Dry-run only. Re-run with `--yes` to apply.');
                     return;
                 }
-                const res = await userColl.updateMany(filter, updatePipeline);
-                console.log(`Done. matched=${res.matchedCount} modified=${res.modifiedCount}`);
+                const [res, duRes] = await Promise.all([
+                    userColl.updateMany(filter, updatePipeline),
+                    domainUserColl.updateMany({}, { $set: { displayName: '' } }),
+                ]);
+                console.log(`Done. user: matched=${res.matchedCount} modified=${res.modifiedCount}`);
+                console.log(`      domain.user: matched=${duRes.matchedCount} modified=${duRes.modifiedCount}`);
                 console.log('Tip: user cache may take up to ~5 minutes to expire; restart Hydro for immediate effect.');
             } finally {
                 await client.close();

@@ -14,6 +14,7 @@ export const Config = Schema.object({
         'studentId',
         'phone',
         'backgroundImage',
+        'displayName',
     ]),
     reset: Schema.object({
         backgroundImage: Schema.string().default('/components/profile/backgrounds/1.jpg'),
@@ -90,6 +91,7 @@ class ManageProfileLockHandler extends Handler {
             || '/components/profile/backgrounds/1.jpg';
 
         const userColl = this.ctx.db.collection('user' as any);
+        const domainUserColl = this.ctx.db.collection('domain.user' as any);
         const updatePipeline: any[] = [{
             $set: {
                 avatar: { $concat: ['gravatar:', { $ifNull: ['$mail', 'unknown@hydro.local'] }] },
@@ -102,8 +104,14 @@ class ManageProfileLockHandler extends Handler {
                 backgroundImage: background,
             },
         }];
-        const res = await userColl.updateMany({ _id: { $gte: 1 } }, updatePipeline);
-        logger.info('Reset user profiles via manage: matched=%d modified=%d', res.matchedCount, res.modifiedCount);
+        const [res, duRes] = await Promise.all([
+            userColl.updateMany({ _id: { $gte: 1 } }, updatePipeline),
+            domainUserColl.updateMany({}, { $set: { displayName: '' } }),
+        ]);
+        logger.info(
+            'Reset user profiles via manage: user matched=%d modified=%d, domain.user matched=%d modified=%d',
+            res.matchedCount, res.modifiedCount, duRes.matchedCount, duRes.modifiedCount,
+        );
         this.response.redirect = this.url('manage_profile_lock', {
             query: {
                 reset: '1',
