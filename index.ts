@@ -147,9 +147,10 @@ export function apply(ctx: Context, config: ReturnType<typeof Config>) {
     if (!config.enabled) return;
     const locked = new Set(config.fields);
 
-    // Block updates from /home/settings/account (HomeSettingsHandler.post).
+    // Block updates from /home/settings/account and /home/settings/domain (HomeSettingsHandler.post).
+    // displayName lives in DOMAIN_USER_SETTINGS and is written via category=domain.
     ctx.on('handler/before/HomeSettings#post', (that) => {
-        if (that.args.category !== 'account') return;
+        if (that.args.category !== 'account' && that.args.category !== 'domain') return;
 
         const touched: string[] = [];
         for (const key of locked) {
